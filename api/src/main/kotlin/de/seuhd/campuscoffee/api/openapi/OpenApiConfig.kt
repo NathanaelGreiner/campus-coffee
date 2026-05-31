@@ -5,22 +5,37 @@ import io.swagger.v3.core.converter.ModelConverters
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.info.Info
 import org.springdoc.core.customizers.OpenApiCustomizer
+import org.springframework.beans.factory.ObjectProvider
+import org.springframework.boot.info.BuildProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 /**
  * OpenAPI/Swagger configuration: global API metadata and registration of the ErrorResponse schema.
+ * The version is set at runtime from the build (see [apiVersionCustomizer]) rather than hard-coded
+ * in the annotation.
  */
 @Configuration
 @OpenAPIDefinition(
     info =
         Info(
             title = "CampusCoffee API",
-            version = "0.0.5",
-            description = "REST API for managing campus coffee points of sale, users, and reviews."
+            description =
+                "REST API for managing points of sale (cafes and coffee shops) on campus, " +
+                    "their users, and reviews."
         )
 )
 class OpenApiConfig {
+    /**
+     * Sets the OpenAPI document version from the build's [BuildProperties], falling back to "dev"
+     * when the build-info resource is absent. Keeps the version in one place: the Gradle build.
+     */
+    @Bean
+    fun apiVersionCustomizer(buildProperties: ObjectProvider<BuildProperties>): OpenApiCustomizer =
+        OpenApiCustomizer { openApi ->
+            openApi.info?.version = buildProperties.ifAvailable?.version ?: "dev"
+        }
+
     /**
      * Registers the ErrorResponse schema in the OpenAPI components. It is only referenced
      * programmatically (by the custom CRUD annotations), so it would otherwise be absent from the

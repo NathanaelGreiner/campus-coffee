@@ -28,9 +28,16 @@ dependencies {
     testImplementation(libs.wiremock.standalone)
 }
 
-// Name the boot jar application-<version>.jar; the Dockerfile copies that exact name.
+// Name the boot jar application.jar (version-independent) so the Dockerfile references a stable
+// name instead of a version-coupled application-<version>.jar.
 tasks.named<BootJar>("bootJar") {
-    archiveFileName.set("application-${project.version}.jar")
+    archiveFileName.set("application.jar")
+}
+
+springBoot {
+    // Write META-INF/build-info.properties so a BuildProperties bean exposes the version at runtime
+    // (consumed by OpenApiConfig and OsmClientConfig), keeping the version sourced from the build.
+    buildInfo()
 }
 
 // Only the executable bootJar is consumed; drop the redundant plain library jar.

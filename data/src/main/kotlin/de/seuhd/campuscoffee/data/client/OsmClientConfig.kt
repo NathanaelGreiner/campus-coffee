@@ -1,5 +1,7 @@
 package de.seuhd.campuscoffee.data.client
 
+import org.springframework.beans.factory.ObjectProvider
+import org.springframework.boot.info.BuildProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestClient
@@ -14,12 +16,17 @@ import org.springframework.web.service.invoker.createClient
 @Configuration
 class OsmClientConfig {
     @Bean
-    fun osmClient(properties: OsmApiProperties): OsmClient {
+    fun osmClient(
+        properties: OsmApiProperties,
+        buildProperties: ObjectProvider<BuildProperties>
+    ): OsmClient {
+        // Version from the build (BuildProperties); "dev" when build-info is absent, e.g., an IDE run.
+        val version = buildProperties.ifAvailable?.version ?: "dev"
         val restClient =
             RestClient
                 .builder()
                 .baseUrl(properties.baseUrl)
-                .defaultHeader("User-Agent", "CampusCoffee/0.0.2")
+                .defaultHeader("User-Agent", "CampusCoffee/$version")
                 .build()
         val factory =
             HttpServiceProxyFactory
