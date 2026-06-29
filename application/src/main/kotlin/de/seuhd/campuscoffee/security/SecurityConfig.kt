@@ -32,20 +32,8 @@ class SecurityConfig {
     ): SecurityFilterChain {
         http {
             authorizeHttpRequests {
-                // POS auslesen
-                authorize(HttpMethod.GET, "/api/pos", permitAll)
-                authorize(HttpMethod.GET, "/api/pos/*", permitAll)
-
-                // Review auslesen
-                authorize(HttpMethod.GET, "/api/reviews", permitAll)
-                authorize(HttpMethod.GET, "/api/reviews/*", permitAll)
-
-                //  Nutzer nach ID auslesen
-                authorize(HttpMethod.GET, "/api/users/filter", authenticated)
-                authorize(HttpMethod.GET, "/api/users/{id}", authenticated)
-
-                // Alle User auslesen
-                authorize(HttpMethod.GET, "/api/users", hasRole("ADMIN"))
+                // All reads are permitted
+                authorize(HttpMethod.GET, "/**", permitAll)
 
                 // Nutzer registrieren
                 authorize(HttpMethod.POST, "/api/users", permitAll)
