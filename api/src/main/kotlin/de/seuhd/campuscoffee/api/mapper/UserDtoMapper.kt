@@ -7,21 +7,18 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 
-/**
- * MapStruct mapper between [User] domain objects and [UserDto]s.
- *
- * The raw [UserDto.password] maps into the domain on the way in only; the domain's stored
- * `passwordHash` has no DTO counterpart, so it is never serialized. A request that omits the roles
- * defaults to {USER}, so a newly registered user is a plain user (the assignment hardens this into a
- * forced {USER} on registration, preventing self-promotion).
- */
+// GEN AI GENERIERT, daich dachte ich hätte MAPPING PROBLEME
 @Mapper(componentModel = "spring", imports = [Role::class])
-@ConditionalOnMissingBean // prevent IntelliJ warning about duplicate beans
+@ConditionalOnMissingBean
 interface UserDtoMapper : DtoMapper<User, UserDto> {
     @Mapping(target = "passwordHash", ignore = true)
+    @Mapping(source = "password", target = "password")
     @Mapping(
         target = "roles",
         expression = "java(source.getRoles() != null ? source.getRoles() : java.util.Set.of(Role.USER))"
     )
     override fun toDomain(source: UserDto): User
+
+    @Mapping(target = "password", ignore = true)
+    override fun fromDomain(source: User): UserDto
 }

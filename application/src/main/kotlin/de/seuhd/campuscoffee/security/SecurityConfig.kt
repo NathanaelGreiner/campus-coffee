@@ -2,6 +2,7 @@ package de.seuhd.campuscoffee.security
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -31,16 +32,61 @@ class SecurityConfig {
     ): SecurityFilterChain {
         http {
             authorizeHttpRequests {
-                // TODO (Exercise 1): require authentication on write operations (POST/PUT/DELETE), keeping
-                //  POS/review reads, registration (POST /users), and the Swagger / dev endpoints open. User
-                //  data is not public: listing users (GET /users) is admin-only and a single user (GET
-                //  /users/{id}, login-name filter) requires authentication; the finer self-or-admin rule for
-                //  one user depends on the target, so it is enforced in the domain in Exercise 2. The starter
-                //  leaves everything open so the app builds green with no auth enforced yet.
+                // POS auslesen
+                authorize(HttpMethod.GET, "/api/pos", permitAll)
+                authorize(HttpMethod.GET, "/api/pos/*", permitAll)
+
+                // Review auslesen
+                authorize(HttpMethod.GET, "/api/reviews", permitAll)
+                authorize(HttpMethod.GET, "/api/reviews/*", permitAll)
+
+                //  Nutzer nach ID auslesen
+                authorize(HttpMethod.GET, "/api/users/filter", authenticated)
+                authorize(HttpMethod.GET, "/api/users/{id}", authenticated)
+
+                // Alle User auslesen
+                authorize(HttpMethod.GET, "/api/users", hasRole("ADMIN"))
+
+                // Nutzer registrieren
+                authorize(HttpMethod.POST, "/api/users", permitAll)
+
+                //  Nutzer nach ID bearbeiten
+                authorize(HttpMethod.PUT, "/api/users/{id}", authenticated)
+
+                // Nutzer löschen
+                authorize(HttpMethod.DELETE, "/api/users/{id}", hasRole("ADMIN"))
+
+                // Review posten
+                authorize(HttpMethod.POST, "/api/reviews", authenticated)
+
+                // Review bearbeiten
+                authorize(HttpMethod.PUT, "/api/reviews/{id}", authenticated)
+
+                // Review löschen
+                authorize(HttpMethod.DELETE, "/api/reviews/{id}", authenticated)
+
+                // Review "approven"
+                authorize(HttpMethod.PUT, "/api/reviews/{id}/approve", authenticated)
+
+                // POS bearbeiten
+                authorize(HttpMethod.POST, "/api/pos", hasRole("MODERATOR"))
+                authorize(HttpMethod.POST, "/api/pos/import/osm/{nodeId}", hasRole("MODERATOR"))
+                authorize(HttpMethod.PUT, "/api/pos/{id}", hasRole("MODERATOR"))
+                authorize(HttpMethod.DELETE, "/api/pos/{id}", hasRole("MODERATOR"))
+
+                // Swagger UI Zugriff
+                authorize(HttpMethod.GET, "/api/swagger-ui/**", permitAll)
+
+                // Documentation Zugriff
+                authorize(HttpMethod.GET, "/api/api-docs/**", permitAll)
+
+                // Dev Zugriff
+                authorize("/api/dev/**", permitAll)
+
                 // TODO (Exercise 3): curating a POS (POST/PUT/DELETE `/pos`) requires the `MODERATOR` role,
                 //  and deleting a user (DELETE `/users/{id}`) requires `ADMIN`; add these rules before the
                 //  catch-all so they take precedence.
-                authorize(anyRequest, permitAll)
+                authorize(anyRequest, authenticated)
             }
             // Stateless API: no server-side session; the principal comes from the credentials on each request.
             csrf { disable() }

@@ -2,6 +2,7 @@ package de.seuhd.campuscoffee.tests.system
 
 import de.seuhd.campuscoffee.api.dtos.ReviewDto
 import de.seuhd.campuscoffee.domain.tests.TestFixtures
+import de.seuhd.campuscoffee.tests.SystemTestUtils.authenticatedClient
 import de.seuhd.campuscoffee.tests.SystemTestUtils.client
 import de.seuhd.campuscoffee.tests.SystemTestUtils.posRequests
 import de.seuhd.campuscoffee.tests.SystemTestUtils.reviewRequests
@@ -30,7 +31,8 @@ class ErrorPathSystemTests : AbstractSystemTest() {
 
     @Test
     fun `creating a user with a duplicate login name returns 409 Conflict`() {
-        val user = userDtoMapper.fromDomain(TestFixtures.getUserFixturesForInsertion().first())
+        val fixture = TestFixtures.getUserFixturesForInsertion().first()
+        val user = userDtoMapper.fromDomain(fixture).copy(password = fixture.password)
         userRequests.create(listOf(user))
 
         val statusCode = userRequests.createAndReturnStatusCodes(listOf(user)).first()
@@ -59,9 +61,10 @@ class ErrorPathSystemTests : AbstractSystemTest() {
             posRequests
                 .create(listOf(posDtoMapper.fromDomain(TestFixtures.getPosFixturesForInsertion().first())))
                 .first()
+        val userFixture = TestFixtures.getUserFixturesForInsertion().first()
         val user =
             userRequests
-                .create(listOf(userDtoMapper.fromDomain(TestFixtures.getUserFixturesForInsertion().first())))
+                .create(listOf(userDtoMapper.fromDomain(userFixture).copy(password = userFixture.password)))
                 .first()
         reviewRequests.create(
             listOf(ReviewDto(posId = pos.id, authorId = user.id, review = "A review that blocks deletion."))
@@ -119,7 +122,7 @@ class ErrorPathSystemTests : AbstractSystemTest() {
 
         // the validation handler names the rejected field in the message; assert the name, not the exact text
         val result =
-            client()
+            authenticatedClient()
                 .post()
                 .uri("/api/pos")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -137,7 +140,7 @@ class ErrorPathSystemTests : AbstractSystemTest() {
         val invalid = posDtoMapper.fromDomain(TestFixtures.getPosFixturesForInsertion().first()).copy(name = null)
 
         val result =
-            client()
+            authenticatedClient()
                 .post()
                 .uri("/api/pos")
                 .contentType(MediaType.APPLICATION_JSON)

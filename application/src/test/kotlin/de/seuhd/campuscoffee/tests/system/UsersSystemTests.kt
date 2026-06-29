@@ -17,9 +17,10 @@ class UsersSystemTests : AbstractSystemTest() {
         val userToCreate = TestFixtures.getUserFixturesForInsertion().first()
         val createdUser =
             userDtoMapper.toDomain(
-                userRequests.create(listOf(userDtoMapper.fromDomain(userToCreate))).first()
+                userRequests
+                    .create(listOf(userDtoMapper.fromDomain(userToCreate).copy(password = "aaaMbnPdFYDqkOpS3fVA")))
+                    .first()
             )
-
         assertEqualsIgnoringIdAndTimestamps(createdUser, userToCreate)
     }
 
@@ -28,8 +29,9 @@ class UsersSystemTests : AbstractSystemTest() {
         val invalidUser = TestFixtures.getUserFixturesForInsertion().first().copy(loginName = "-")
         val statusCode =
             userRequests
-                .createAndReturnStatusCodes(listOf(userDtoMapper.fromDomain(invalidUser)))
-                .first()
+                .createAndReturnStatusCodes(
+                    listOf(userDtoMapper.fromDomain(invalidUser).copy(password = "aaaMbnPdFYDqkOpS3fVA"))
+                ).first()
 
         assertThat(statusCode).isEqualTo(HttpStatus.BAD_REQUEST.value())
     }
@@ -72,7 +74,10 @@ class UsersSystemTests : AbstractSystemTest() {
 
         val updatedUser =
             userDtoMapper.toDomain(
-                userRequests.update(listOf(userDtoMapper.fromDomain(userToUpdate))).first()
+                userRequests
+                    .update(
+                        listOf(userDtoMapper.fromDomain(userToUpdate).copy(password = userToUpdate.password))
+                    ).first()
             )
         assertEqualsIgnoringTimestamps(updatedUser, userToUpdate)
 

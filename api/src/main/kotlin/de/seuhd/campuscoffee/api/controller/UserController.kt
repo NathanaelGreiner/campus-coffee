@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -61,7 +62,7 @@ class UserController(
     override fun create(
         @Parameter(description = "Data of the user to create.", required = true)
         @RequestBody
-        @Valid dto: UserDto
+        @Validated(UserDto.OnCreate::class) dto: UserDto
     ): ResponseEntity<UserDto> = super.create(dto)
 
     @Operation

@@ -1,7 +1,7 @@
 package de.seuhd.campuscoffee.tests.system
 
 import de.seuhd.campuscoffee.api.dtos.DevSummaryDto
-import de.seuhd.campuscoffee.tests.SystemTestUtils.client
+import de.seuhd.campuscoffee.tests.SystemTestUtils.authenticatedClient
 import de.seuhd.campuscoffee.tests.SystemTestUtils.posRequests
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -18,7 +18,7 @@ class DevSystemTests : AbstractSystemTest() {
     @Test
     fun `PUT replaces all data with the fixtures and is idempotent`() {
         val first =
-            client()
+            authenticatedClient()
                 .put()
                 .uri("/api/dev/data")
                 .exchange()
@@ -28,7 +28,7 @@ class DevSystemTests : AbstractSystemTest() {
 
         // a second PUT replaces rather than appends, so it yields the same counts (no duplicate-key error)
         val second =
-            client()
+            authenticatedClient()
                 .put()
                 .uri("/api/dev/data")
                 .exchange()
@@ -39,14 +39,14 @@ class DevSystemTests : AbstractSystemTest() {
 
     @Test
     fun `GET returns the current counts and DELETE clears all data`() {
-        client()
+        authenticatedClient()
             .put()
             .uri("/api/dev/data")
             .exchange()
             .returnResult<DevSummaryDto>()
 
         val counts =
-            client()
+            authenticatedClient()
                 .get()
                 .uri("/api/dev/data")
                 .exchange()
@@ -55,7 +55,7 @@ class DevSystemTests : AbstractSystemTest() {
         assertThat(counts.responseBody!!.pos).isEqualTo(posRequests.retrieveAll().size)
 
         val cleared =
-            client()
+            authenticatedClient()
                 .delete()
                 .uri("/api/dev/data")
                 .exchange()
@@ -64,7 +64,7 @@ class DevSystemTests : AbstractSystemTest() {
         assertThat(posRequests.retrieveAll()).isEmpty()
 
         val empty =
-            client()
+            authenticatedClient()
                 .get()
                 .uri("/api/dev/data")
                 .exchange()

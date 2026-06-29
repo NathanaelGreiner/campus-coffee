@@ -4,6 +4,8 @@ import de.seuhd.campuscoffee.Application
 import de.seuhd.campuscoffee.api.mapper.PosDtoMapper
 import de.seuhd.campuscoffee.api.mapper.ReviewDtoMapper
 import de.seuhd.campuscoffee.api.mapper.UserDtoMapper
+import de.seuhd.campuscoffee.domain.model.objects.Role
+import de.seuhd.campuscoffee.domain.model.objects.User
 import de.seuhd.campuscoffee.domain.ports.api.PosService
 import de.seuhd.campuscoffee.domain.ports.api.ReviewService
 import de.seuhd.campuscoffee.domain.ports.api.UserService
@@ -55,6 +57,17 @@ abstract class AbstractSystemTest {
         reviewService.clear()
         posService.clear()
         userService.clear()
+        userService.upsert(
+            // Soll nicht mit den Fixtures kollidieren
+            User(
+                loginName = "admin1",
+                emailAddress = "admin@test.de",
+                firstName = "Test",
+                lastName = "Admin",
+                roles = setOf(Role.USER, Role.MODERATOR, Role.ADMIN),
+                password = "testendes_password123"
+            )
+        )
         configureClient(port)
     }
 

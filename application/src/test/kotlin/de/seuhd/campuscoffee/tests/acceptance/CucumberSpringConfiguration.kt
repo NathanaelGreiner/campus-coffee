@@ -1,5 +1,7 @@
 package de.seuhd.campuscoffee.tests.acceptance
 
+import de.seuhd.campuscoffee.domain.model.objects.Role
+import de.seuhd.campuscoffee.domain.model.objects.User
 import de.seuhd.campuscoffee.domain.ports.api.PosService
 import de.seuhd.campuscoffee.domain.ports.api.ReviewService
 import de.seuhd.campuscoffee.domain.ports.api.UserService
@@ -36,6 +38,17 @@ class CucumberSpringConfiguration(
         reviewService.clear()
         posService.clear()
         userService.clear()
+        userService.upsert(
+            // Selbes wie in AbstractSystemTest
+            User(
+                loginName = "admin1",
+                emailAddress = "admin@test.de",
+                firstName = "Test",
+                lastName = "Admin",
+                roles = setOf(Role.USER, Role.MODERATOR, Role.ADMIN),
+                password = "testendes_password123"
+            )
+        )
         configureClient(port)
     }
 

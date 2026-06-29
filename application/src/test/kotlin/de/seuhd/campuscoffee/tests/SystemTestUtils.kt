@@ -18,6 +18,10 @@ import java.lang.reflect.Array as ReflectArray
  * Utilities for the system tests.
  */
 object SystemTestUtils {
+    // Feste Werte
+    fun authenticatedClient(): RestTestClient =
+        client.mutate().defaultHeaders { it.setBasicAuth("admin1", "testendes_password123") }.build()
+
     /** Client bound to the running server for the current test; set via [configureClient]. */
     private lateinit var client: RestTestClient
 
@@ -117,7 +121,9 @@ object SystemTestUtils {
     class Requests<T : Any>(
         private val basePath: String,
         private val dtoClass: Class<T>,
-        private val idGetter: (T) -> Long?
+        private val idGetter: (T) -> Long?,
+        private val username: String? = null,
+        private val password: String? = null
     ) {
         /** The DTO body of a response, after asserting the expected status. */
         private fun body(
@@ -132,6 +138,15 @@ object SystemTestUtils {
         /** The raw status code of a response, without asserting it. */
         private fun status(response: RestTestClient.ResponseSpec): Int =
             response.returnResult<ByteArray>().status.value()
+
+        // Variabel
+        private val authClient: RestTestClient
+            get() =
+                if (username != null && password != null) {
+                    client.mutate().defaultHeaders { it.setBasicAuth(username, password) }.build()
+                } else {
+                    client
+                }
 
         /** The list body of a response, deserialized via the DTO array type, after asserting 200. */
         @Suppress("UNCHECKED_CAST")
@@ -190,7 +205,7 @@ object SystemTestUtils {
         fun create(entityList: List<T>): List<T> =
             entityList.map { dto ->
                 body(
-                    client
+                    authClient
                         .post()
                         .uri(basePath)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -203,7 +218,7 @@ object SystemTestUtils {
         fun createAndReturnStatusCodes(entityList: List<T>): List<Int> =
             entityList.map { dto ->
                 status(
-                    client
+                    authClient
                         .post()
                         .uri(basePath)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -215,7 +230,7 @@ object SystemTestUtils {
         fun update(entityList: List<T>): List<T> =
             entityList.map { dto ->
                 body(
-                    client
+                    authClient
                         .put()
                         .uri("$basePath/{id}", idGetter(dto))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -227,7 +242,12 @@ object SystemTestUtils {
 
         fun deleteAndReturnStatusCodes(idList: List<Long>): List<Int> =
             idList.map { id ->
-                status(client.delete().uri("$basePath/{id}", id).exchange())
+                status(
+                    authClient
+                        .delete()
+                        .uri("$basePath/{id}", id)
+                        .exchange()
+                )
             }
 
         /** Filters by several query parameters, returning a list (the reviews filter returns many). */
@@ -259,7 +279,7 @@ object SystemTestUtils {
             dto: T
         ): Int =
             status(
-                client
+                authClient
                     .put()
                     .uri("$basePath/{id}", pathId)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -271,7 +291,7 @@ object SystemTestUtils {
         fun updateAndReturnStatusCodes(entityList: List<T>): List<Int> =
             entityList.map { dto ->
                 status(
-                    client
+                    authClient
                         .put()
                         .uri("$basePath/{id}", idGetter(dto))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -286,7 +306,10 @@ object SystemTestUtils {
             userId: Long
         ): T =
             body(
-                client.put().uri("$basePath/{id}/approve?user_id={userId}", id, userId).exchange(),
+                authClient
+                    .put()
+                    .uri("$basePath/{id}/approve?user_id={userId}", id, userId)
+                    .exchange(),
                 HttpStatus.OK
             )
 
@@ -294,10 +317,16 @@ object SystemTestUtils {
         fun approveAndReturnStatusCode(
             id: Long,
             userId: Long
-        ): Int = status(client.put().uri("$basePath/{id}/approve?user_id={userId}", id, userId).exchange())
+        ): Int =
+            status(
+                authClient
+                    .put()
+                    .uri("$basePath/{id}/approve?user_id={userId}", id, userId)
+                    .exchange()
+            )
     }
 
-    val posRequests = Requests("/api/pos", PosDto::class.java) { it.id }
-    val userRequests = Requests("/api/users", UserDto::class.java) { it.id }
-    val reviewRequests = Requests("/api/reviews", ReviewDto::class.java) { it.id }
+    val userRequests = Requests("/api/users", UserDto::class.java, { it.id }, "admin1", "testendes_password123")
+    val posRequests = Requests("/api/pos", PosDto::class.java, { it.id }, "admin1", "testendes_password123")
+    val reviewRequests = Requests("/api/reviews", ReviewDto::class.java, { it.id }, "admin1", "testendes_password123")
 }

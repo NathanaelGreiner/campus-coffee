@@ -2,7 +2,8 @@
 
 **Group members:**
 <!-- List all group members here. -->
-
+Nathanael Greiner
+Phillip Dietle
 <!--
 About 200 words, per group. Answer the two questions the assignment asks:
 
